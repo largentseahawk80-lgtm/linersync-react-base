@@ -1,19 +1,19 @@
-# LinerSync Chunk 2
+# LinerSync Chunk 3
 
-Chunk 2 adds the core field capture layer.
+Chunk 3 adds the smart panel logic layer.
 
 Included:
-- Repair module
-- Roll module
-- Panel module
-- Seam module
-- Local saved lists
-- Record detail
-- Edit and delete
+- GPS start and end for panel
+- Auto panel length from GPS
+- Orientation auto-fill
+- Zone field
+- Width field
+- Offset side
+- Keyword voice fill
+- Panel logic object stored on save
 
 Still not included:
-- GPS smart panel logic
-- Voice keyword fill
-- Supabase cloud backup
+- Exact jobsite XLS field mapping
+- Cloud backup wiring
 - Mythos confirmation layer
-- CSV/KML export
+- Export layer
