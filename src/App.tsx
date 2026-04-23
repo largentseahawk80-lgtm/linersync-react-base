@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CloudBackupPanel } from './components/CloudBackupPanel'
+import { schedulePush } from './services/syncService'
 
 type Screen = 'home' | 'newProject' | 'projectHome' | 'chooser' | 'module' | 'detail'
 type ModuleKey = 'repairs' | 'rolls' | 'panels' | 'seams'
@@ -6,9 +8,8 @@ type Project = { name: string; site: string; date: string; notes: string }
 type RecordMap = Record<string, string>
 type DB = { repairs: RecordMap[]; rolls: RecordMap[]; panels: RecordMap[]; seams: RecordMap[] }
 
-const PROJECT_KEY = 'linersync_project_v3'
-const DB_KEY = 'linersync_db_v3'
-
+const PROJECT_KEY = 'linersync_project_v4'
+const DB_KEY = 'linersync_db_v4'
 const emptyProject: Project = { name: '', site: '', date: '', notes: '' }
 const emptyDb: DB = { repairs: [], rolls: [], panels: [], seams: [] }
 
@@ -103,7 +104,12 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    localStorage.setItem(PROJECT_KEY, JSON.stringify(project))
+  }, [project])
+
+  useEffect(() => {
     localStorage.setItem(DB_KEY, JSON.stringify(db))
+    schedulePush()
   }, [db])
 
   const hasProject = Boolean(project.name.trim())
@@ -130,7 +136,6 @@ export default function App() {
       setStatus('Project name is required')
       return
     }
-    localStorage.setItem(PROJECT_KEY, JSON.stringify(draftProject))
     setProject(draftProject)
     setScreen('projectHome')
     setStatus('Project saved locally')
@@ -189,8 +194,7 @@ export default function App() {
   async function getLiveGps() {
     return new Promise<RecordMap>((resolve) => {
       if (!navigator.geolocation) {
-        const fake = { lat: '32.000000', lng: '-106.000000' }
-        resolve(fake)
+        resolve({ lat: '32.000000', lng: '-106.000000' })
         return
       }
       navigator.geolocation.getCurrentPosition(
@@ -219,13 +223,10 @@ export default function App() {
     else if (said.includes('north slope')) fieldInput('Zone', 'North Slope')
     else if (said.includes('south slope')) fieldInput('Zone', 'South Slope')
     else if (said.includes('floor')) fieldInput('Zone', 'Floor')
-
     if (said.includes('north south') || said.includes('n s')) fieldInput('Orientation', 'N-S')
     if (said.includes('east west') || said.includes('e w')) fieldInput('Orientation', 'E-W')
-
     const width = said.match(/width\s+(\d+(\.\d+)?)/i)
     if (width) fieldInput('Width', width[1])
-
     const panel = said.match(/panel\s+([a-z0-9\-]+)/i)
     if (panel && !['start','stop','save'].includes(panel[1].toLowerCase())) fieldInput('Panel#', panel[1].toUpperCase())
   }
@@ -250,7 +251,6 @@ export default function App() {
     recg.onerror = () => setHeard('Voice recognition error')
     recg.start()
   }
-
   function saveRecord() {
     const firstField = cfg.firstField
     if (!(recordDraft[firstField] || '').trim()) {
@@ -292,7 +292,6 @@ export default function App() {
     setRecordDraft({})
     setStatus(`${cfg.title} saved`)
   }
-
   function deleteRecord(id: string) {
     setDb((prev) => ({
       ...prev,
@@ -312,7 +311,7 @@ export default function App() {
               <div className="logo"><span>LS</span></div>
               <div>
                 <h1 className="title">LinerSync</h1>
-                <p className="subtitle">Chunk 3 — Smart panel logic</p>
+                <p className="subtitle">Chunk 4 — Cloud backup</p>
               </div>
             </div>
             <div className="accent-line" />
@@ -326,6 +325,9 @@ export default function App() {
             <div className="stats">
               <div className="stat-card"><strong>Project</strong><span>{project.name || 'None'}</span></div>
               <div className="stat-card"><strong>Total Saved</strong><span>{String(totalSaved)}</span></div>
+            </div>
+            <div className="stack" style={{ marginTop: 14 }}>
+              <CloudBackupPanel />
             </div>
           </section>
         )}
@@ -356,10 +358,7 @@ export default function App() {
             </div>
             <div className="stack">
               <button className="btn big primary" onClick={() => setScreen('chooser')}>TAP TO CAPTURE</button>
-              <div className="grid-two">
-                <button className="btn small" onClick={() => setStatus('Map comes later')}>MAP</button>
-                <button className="btn small" onClick={() => setStatus('Reports comes later')}>REPORTS</button>
-              </div>
+              <CloudBackupPanel />
             </div>
           </section>
         )}
@@ -446,8 +445,6 @@ export default function App() {
                         <option value="Fusion">Fusion</option>
                         <option value="Extrusion">Extrusion</option>
                       </select>
-                    ) : field === 'Start GPS' || field === 'End GPS' || field === 'Auto Length' ? (
-                      <input value={recordDraft[field] || ''} onChange={(e) => fieldInput(field, e.target.value)} placeholder={field} />
                     ) : (
                       <input value={recordDraft[field] || ''} onChange={(e) => fieldInput(field, e.target.value)} placeholder={field} />
                     )}
@@ -502,12 +499,12 @@ export default function App() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>HELP</h3>
             <div className="detail-box">
-              <strong>Chunk 3 scope</strong>
-              GPS panel start and stop, auto panel length, orientation, zone, offset side, and keyword voice fill.
+              <strong>Chunk 4 scope</strong>
+              Supabase sign in, create account, backup now, restore, auto backup after local save.
             </div>
             <div className="detail-box">
-              <strong>Real-jobsite data note</strong>
-              Your uploaded jobsite XLS files still need field extraction for the exact final logging model. This chunk adds the smart field logic layer first.
+              <strong>Before it works</strong>
+              You must create the Supabase table app_snapshots and add your .env.local keys.
             </div>
             <button className="btn primary" onClick={() => setHelpOpen(false)}>CLOSE</button>
           </div>
