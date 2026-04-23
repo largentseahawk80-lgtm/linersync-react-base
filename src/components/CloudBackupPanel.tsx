@@ -37,7 +37,7 @@ export function CloudBackupPanel() {
   async function handleBackup() {
     setBusy(true); setMsg(null)
     const res = await pushAll()
-    setMsg(res.ok ? 'Backed up.' : `Backup failed: ${res.error}`)
+    setMsg(res.ok ? 'Backed up.' : `Backup failed: ${'error' in res ? res.error : 'Unknown error'}`)
     setBusy(false)
   }
 
@@ -45,7 +45,7 @@ export function CloudBackupPanel() {
     if (!window.confirm('Replace this phone data with the cloud copy?')) return
     setBusy(true); setMsg(null)
     const res = await pullAllAndReplaceLocal()
-    setMsg(res.ok ? 'Restored. Reloading...' : `Restore failed: ${res.error}`)
+    setMsg(res.ok ? 'Restored. Reloading...' : `Restore failed: ${'error' in res ? res.error : 'Unknown error'}`)
     if (res.ok) window.setTimeout(() => window.location.reload(), 600)
     setBusy(false)
   }
